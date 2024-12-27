@@ -1,17 +1,88 @@
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.locks.Condition;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
+class Pair {
+    public int id;
+    public String country;
+
+    Pair(int id, String country) {
+        this.id = id;
+        this.country = country;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (!(o instanceof Pair)) return false;
+        Pair pair = (Pair) o; // Cast explicit
+        return Objects.equals(id, pair.id) && Objects.equals(country, pair.country);
+    }
+
+    @Override
+    public int hashCode() {
+        return Objects.hash(id, country);
+    }
+
+}
+
+class MyListBlack {
+    List<Pair> list = new ArrayList<>();
+    Lock lock = new ReentrantLock();
+
+    public boolean contains(Pair pair) {
+        lock.lock();
+        try {
+            return list.contains(pair);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public void add(Pair pair) {
+        lock.lock();
+        try {
+            list.add(pair);
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public List<Pair> getList() {
+        return list;
+    }
+}
+
+
+
 public class Parallel {
+    private static final Map<Integer, ReentrantLock> access = new ConcurrentHashMap<>();
+    private static final MyList resultList = new MyList();
+    private static final MyListBlack blackList = new MyListBlack();
+
+    public static void printAllThreads() {
+        Map<Thread, StackTraceElement[]> threads = Thread.getAllStackTraces();
+        for (Map.Entry<Thread, StackTraceElement[]> entry : threads.entrySet()) {
+            Thread thread = entry.getKey();
+            StackTraceElement[] stackTrace = entry.getValue();
+            System.out.println("Thread: " + thread.getName() + " (State: " + thread.getState() + ")");
+            for (StackTraceElement element : stackTrace) {
+                System.out.println("  at " + element);
+            }
+        }
+    }
+
     public static void main(String[] args) throws IOException, InterruptedException {
-        MyList synchronizedList = new MyList();
+
         MyQueue<Node> synchronizedQueue = new MyQueue<>();
+        for (int i = 1; i < 449; ++i) {
+            access.put(i, new ReentrantLock());
+        }
 
         List<String> files = new ArrayList<>();
         for (int i = 1; i <= 5; i++) {
@@ -24,18 +95,13 @@ public class Parallel {
         int p_r = 2;
         int p_w = P - p_r;
 
-        int start, end = 0, cat, rest;
+        int start = 0, end = 0, cat, rest;
         int N = files.size();
-        start = 0;
         cat = N / p_r;
         rest = N % p_r;
 
         ExecutorService producerPool = Executors.newFixedThreadPool(p_r);
         ExecutorService consumerPool = Executors.newFixedThreadPool(p_w);
-
-        Lock lock = new ReentrantLock();
-        Condition notFull = lock.newCondition();
-        Condition notEmpty = lock.newCondition();
 
         List<Future<?>> producerFutures = new ArrayList<>();
         long start_t = System.nanoTime();
@@ -50,7 +116,7 @@ public class Parallel {
             int finalEnd = end;
             producerFutures.add(producerPool.submit(() -> {
                 try {
-                    Producer producer = new Producer(finalStart, finalEnd, synchronizedQueue, files, lock, notFull, notEmpty);
+                    Producer producer = new Producer(finalStart, finalEnd, synchronizedQueue, files);
                     producer.run();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -62,7 +128,7 @@ public class Parallel {
         for (int i = 0; i < p_w; i++) {
             consumerPool.submit(() -> {
                 try {
-                    Consumer consumer = new Consumer(synchronizedQueue, synchronizedList, lock, notFull, notEmpty);
+                    Consumer consumer = new Consumer(synchronizedQueue, resultList);
                     consumer.run();
                 } catch (Exception e) {
                     e.printStackTrace();
@@ -88,9 +154,12 @@ public class Parallel {
         consumerPool.awaitTermination(1, TimeUnit.MINUTES);
 
         System.out.println("Am ieșit toți");
-        synchronizedList.showList();
 
-        Utils.writeResultParalell(synchronizedList, "ResultParallel.txt");
+        printAllThreads();
+        resultList.sort();
+        resultList.showList();
+
+        Utils.writeResultParalell(resultList, "ResultParallel.txt");
         long end_t = System.nanoTime();
 
         assert (Utils.areFilesEqual("Result.txt", "ResultParallel.txt"));
@@ -99,39 +168,30 @@ public class Parallel {
     }
 
     public static class Producer {
-        private static final Integer MAX_CAPACITY = 100;
         int start;
         int end;
         MyQueue<Node> queue;
         List<String> files;
-        Lock lock;
-        Condition notFull;
-        Condition notEmpty;
 
-        public Producer(int start, int end, MyQueue<Node> queue, List<String> files, Lock lock, Condition notFull, Condition notEmpty) {
+        public Producer(int start, int end, MyQueue<Node> queue, List<String> files) {
             this.start = start;
             this.end = end;
             this.queue = queue;
             this.files = files;
-            this.lock = lock;
-            this.notFull = notFull;
-            this.notEmpty = notEmpty;
         }
 
-        public void readFromFileAddToQueue(String filePath){
+        public void readFromFileAddToQueue(String filePath) {
             try (BufferedReader reader = new BufferedReader(new FileReader(filePath))) {
                 String line;
                 while ((line = reader.readLine()) != null) {
                     String[] parts = line.split(",");
                     int firstNumber = Integer.parseInt(parts[0].trim());
                     int secondNumber = Integer.parseInt(parts[1].trim());
-                    Node node=new Node(firstNumber,secondNumber);
+                    Node node = new Node(new Participant(firstNumber, secondNumber, ""),null,null);
                     this.queue.enqueue(node);
                 }
-            } catch (IOException e) {
+            } catch (IOException | InterruptedException e) {
                 e.printStackTrace();
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
             }
         }
 
@@ -146,33 +206,54 @@ public class Parallel {
     public static class Consumer {
         MyQueue<Node> queue;
         MyList list;
-        Lock lock;
-        Condition notFull;
-        Condition notEmpty;
 
-        public Consumer(MyQueue<Node> queue, MyList list, Lock lock, Condition notFull, Condition notEmpty) {
+        public Consumer(MyQueue<Node> queue, MyList list) {
             this.queue = queue;
             this.list = list;
-            this.lock = lock;
-            this.notFull = notFull;
-            this.notEmpty = notEmpty;
         }
 
         public void run() {
             try {
-                while (true) {
+                while (!queue.isEmpty() || !queue.isProducersFinished()) {
+                    Participant participant = null;
+                    Node node=null;
+                    try{
+                        node = queue.dequeue();
+                        if (node == null) {
+                            // Dacă node este null (coada este goală și producătorii au terminat)
+                            if(queue.isProducersFinished()) {
+                                break;
+                            }
+                        }else{
+                            participant=node.getData();
+                        }
 
+                    } catch (InterruptedException e) {
 
-                    Node nodeDequeue = this.queue.dequeue();
-                    if(nodeDequeue == null) break;  // am terminat de citit
+                    }
+                    if (participant == null) {
+                        queue.isProducersFinished();
+                        continue;
+                    }
+                    access.get(participant.getId()).lock();
 
-                    int firstNumber = nodeDequeue.getIdP();
-                    int secondNumber = nodeDequeue.getScore();
-                    list.addNode(firstNumber, secondNumber);
+                    if (!blackList.contains(new Pair(participant.getId(), participant.getCountry()))) {
+                        if (participant.getScore() == -1) {
+                            resultList.delete(participant);
+                            blackList.add(new Pair(participant.getId(), participant.getCountry()));
+                        } else {
+                            Node actual = resultList.update(participant);
 
+                            if (actual == null) {
+                                resultList.add(participant);
+                            }
+                        }
+                    }
+
+                    access.get(participant.getId()).unlock();
 
                 }
-            } catch (InterruptedException e) {
+            }catch (Exception e){
                 e.printStackTrace();
             }
         }

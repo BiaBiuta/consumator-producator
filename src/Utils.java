@@ -41,7 +41,7 @@ public class Utils {
         List<Node> nodes = l.getElements();
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (Node n: nodes) {
-                writer.write(n.getIdP() + "," + n.getScore());
+                writer.write(n.getData().getId() + "," + n.getData().getScore());
                 writer.newLine();
             }
         } catch (IOException e) {
@@ -52,7 +52,7 @@ public class Utils {
         List<Node> nodes = l.getElements();
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filePath))) {
             for (int i=1;i<nodes.size()-1;i++) {
-                writer.write(nodes.get(i).getIdP() + "," + nodes.get(i).getScore());
+                writer.write(nodes.get(i).getData().getId() + "," + nodes.get(i).getData().getScore());
                 writer.newLine();
             }
         } catch (IOException e) {

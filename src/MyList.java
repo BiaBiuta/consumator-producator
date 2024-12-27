@@ -1,147 +1,139 @@
+
+
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 public class MyList {
-    private Node head; // Sentinel start node
-    private final Node tail; // Sentinel end node
-    private final Map<Integer, Node> frauds;
+    public final Node head = new Node(null, null, null);
+    public final Node tail = new Node(null, null, null);
 
-    public MyList(){
-        head = new Node();
-        tail = new Node();
-        head.setNext(tail); // Initially, head points directly to tail
-        frauds = new HashMap<>();
+    public MyList() {
+        head.next = tail;
+        tail.previous = head;
     }
-
-    public void addNode(int idP, int score) {
-        Node newNode = new Node(idP, score);
-        System.out.println(Thread.currentThread().getName() + " trying to lock head");
-        Node foundN = find(newNode.getIdP());
-
-        if(foundN != null ){
-            newNode.setScore(newNode.getScore() + foundN.getScore());
-            deleteNode(newNode.getIdP());
-        }
-
-        head.lock();
-        System.out.println(Thread.currentThread().getName() + " locked head");
-
-        Node prev = head;
-        Node curr = head.getNext();
-
-        try {
-            curr.lock(); // Lock the first real node
-            System.out.println(Thread.currentThread().getName() + " locked " + curr);
-
-            if (newNode.getScore() == -1) {
-                frauds.put(idP, newNode);
-            }
-            if (!isFraud(newNode.getIdP())) {
-                while (curr != tail && curr.getScore() > newNode.getScore()) {
-                    prev.unlock();
-                    prev = curr;
-                    curr = curr.getNext();
-                    curr.lock();
-                }
-
-                if (curr != tail && newNode.getScore() == curr.getScore()) {
-                    while (curr != tail && curr.getIdP() < newNode.getIdP() && curr.getScore() == newNode.getScore()) {
-                        prev.unlock();
-                        prev = curr;
-                        curr = curr.getNext();
-                        curr.lock();
-                    }
-                }
-
-                newNode.setNext(curr);
-                prev.setNext(newNode);
-            }
-
-        } finally {
-            prev.unlock();
-            curr.unlock();
-            if(newNode.getScore()==-1){
-                deleteNode(newNode.getIdP());
-            }
-        }
-    }
-
-
-
-
-
-    public void deleteNode(int idP) {
-        head.lock();
-        Node prev = head;
-        Node curr = head.getNext();
-        curr.lock();
-
-        try {
-            while (curr != tail && curr.getIdP() != idP) {
-                prev.unlock();
-                prev = curr;
-                curr = curr.getNext();
-                curr.lock();
-            }
-
-            if (curr != tail) {
-                prev.setNext(curr.getNext());
-            }
-        } finally {
-
-            curr.unlock();
-            prev.unlock();
-        }
-    }
-
-    public Node find(int idP) {
-        head.lock();
-        Node prev = head;
-        Node curr = head.getNext();
-        curr.lock();
-
-        try {
-            while (curr != tail && curr.getIdP() != idP) {
-                prev.unlock();
-                prev = curr;
-                curr = curr.getNext();
-                curr.lock();
-            }
-
-            return curr != tail ? curr : null;
-        } finally {
-
-            curr.unlock();
-            prev.unlock();
-        }
-    }
-
-    public boolean isFraud(int idP) {
-        return frauds.containsKey(idP);
-    }
-
     public List<Node> getElements(){
         List<Node> all = new ArrayList<>();
         Node p = this.head;
         while(p!=null){
             all.add(p);
-            p = p.getNext();
+            p = p.next;
         }
         return all;
     }
-    public void removeHead() {
-        if (head != null) {
-            head = this.head.getNext(); // Capul devine următorul nod
+    public void showList() {
+        Node p= this.head.next;
+        while(p!=this.tail){
+            System.out.println("("+p.getData().getId()+" , "+p.getData().getScore()+")");
+            p=p.next;
         }
     }
+    public List<Participant> getItemsAsList() {
+        List<Participant> list = new ArrayList<>();
 
-    public void showList() {
-        Node p= this.head.getNext();
-        while(p!=this.tail){
-            System.out.println("("+p.getIdP()+" , "+p.getScore()+")");
-            p=p.getNext();
+        Node actual = head.next;
+
+        while (actual.isNotLastNode()) {
+            list.add(actual.getData());
+            actual = actual.next;
         }
+
+        return list;
+    }
+
+    public void sort() {
+        boolean sorted;
+        do {
+            sorted = true;
+
+            Node actual = head.next;
+
+            while (actual.next != tail) {
+                if (actual.getData().getScore() < actual.next.getData().getScore()) {
+                    Participant temporaryData = actual.getData();
+                    actual.setData(actual.next.getData());
+                    actual.next.setData(temporaryData);
+                    sorted = false;
+                }else if (actual.getData().getScore() == actual.next.getData().getScore()) {
+                    if (actual.getData().getId() > actual.next.getData().getId()) {
+                        // Dacă id-ul este mai mare, schimbă datele
+                        Participant temporaryData = actual.getData();
+                        actual.setData(actual.next.getData());
+                        actual.next.setData(temporaryData);
+                        sorted = false;
+                    }
+                }
+
+                actual = actual.next;
+            }
+
+        } while (!sorted);
+    }
+
+    Node update(Participant participant) {
+        Node actual = head.next;
+        if (head.next != tail) {
+            while (actual.isNotLastNode()) {
+                actual.lock();
+                if (actual.getData().equals(participant)) {
+                    actual.getData().setScore(actual.getData().getScore() + participant.getScore());
+                    actual.unlock();
+                    return actual;
+                }
+                actual.unlock();
+                actual = actual.next;
+            }
+        }
+
+        return null;
+    }
+
+    void add(Participant participant) {
+        head.lock();
+        head.next.lock();
+
+        Node right = head.next;
+
+        Node node = new Node(participant, null, null);
+        node.lock();
+
+        head.next = node;
+        node.previous = head;
+        node.next = right;
+        right.previous = node;
+
+        right.unlock();
+        node.unlock();
+        head.unlock();
+    }
+
+    void delete(Participant participant) {
+        head.lock();
+        head.next.lock();
+        if (head.next == tail) {
+            head.unlock();
+            head.next.unlock();
+            return;
+        }
+        Node actual = head.next;
+
+        while (actual.isNotLastNode()) {
+            actual.next.lock();
+            if (actual.getData().getId()==participant.getId()) {
+                Node left = actual.previous;
+                Node right = actual.next;
+
+                left.next = right;
+                right.previous = left;
+                left.unlock();
+                actual.unlock();
+                right.unlock();
+                return;
+            }
+            actual.previous.unlock();
+            actual = actual.next;
+        }
+
+        actual.previous.unlock();
+        actual.unlock();
     }
 }
