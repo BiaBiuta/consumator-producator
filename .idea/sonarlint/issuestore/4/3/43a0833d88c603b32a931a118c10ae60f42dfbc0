@@ -1,0 +1,45 @@
+
+i
+java:S1192²"KDefine a constant instead of duplicating this literal "Consumer #" 5 times.(ŞÈÜ½8Èê¾Æ1
+h
+java:S1192~"KDefine a constant instead of duplicating this literal "Producer #" 4 times.(åé†Í8ñâ­ÌÄ1
+m	java:S117"QRename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(÷´”“8¢ã­ÌÄ1
+r	java:S117"QRename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(³Œç˜øÿÿÿÿ8¢ã­ÌÄ1
+m	java:S117"QRename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(«¶ñ©8£ã­ÌÄ1
+m	java:S117"QRename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(Ò«‡ë8£ã­ÌÄ1
+m	java:S117)"QRename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(»Á” 8£ã­ÌÄ1
+r	java:S117S"QRename this local variable to match the regular expression '^[a-z][a-zA-Z0-9]*$'.(ÔóŸéşÿÿÿÿ8¤ã­ÌÄ1
+‰
+java:S1130"lRemove the declaration of thrown exception 'java.io.IOException', as it cannot be thrown from method's body.(œû¿Ø8“ÿÁÆ1
+b
+java:S1659"@Declare "end" and all following declarations on a separate line.(÷úŠ‚ıÿÿÿÿ8™ä­ÌÄ1
+G	java:S106"+Replace this use of System.out by a logger.(ÉÁ±8¤ä­ÌÄ1
+G	java:S106"+Replace this use of System.out by a logger.(ªÄ—é8¦ä­ÌÄ1
+€
+java:S2142B"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(±Ÿ—±ÿÿÿÿÿ8·ä­ÌÄ1
+€
+java:S2142L"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(±Ÿ—±ÿÿÿÿÿ8×ä­ÌÄ1
+]	java:S125Q"<This block of commented-out lines of code should be removed.(€Ù’óşÿÿÿÿ8Ûä­ÌÄ1
+G	java:S106["+Replace this use of System.out by a logger.(æïñÜ8ää­ÌÄ1
+]	java:S125U"<This block of commented-out lines of code should be removed.(ş£ØÛúÿÿÿÿ8ÿÁÆ1
+F	java:S106\"+Replace this use of System.out by a logger.(òÀã]8æä­ÌÄ1
+G	java:S106]"+Replace this use of System.out by a logger.(õı¤ƒ8çä­ÌÄ1
+G	java:S106^"+Replace this use of System.out by a logger.(±Æö­8êä­ÌÄ1
+b	java:S107l"AConstructor has 8 parameters, which is greater than 7 authorized.(êÏäÊıÿÿÿÿ8÷ä­ÌÄ1
+G	java:S106~"+Replace this use of System.out by a logger.(åé†Í8–å­ÌÄ1
+M	java:S106‚"+Replace this use of System.out by a logger.(ŞÃÿÑüÿÿÿÿ8šå­ÌÄ1
+X
+java:S1161‹":Add the "@Override" annotation above this method signature(“–ış8 å­ÌÄ1
+M	java:S106Œ"+Replace this use of System.out by a logger.(İ­Ä¦ÿÿÿÿÿ8¥å­ÌÄ1
+|
+java:S2142‘"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(ò¶È8µå­ÌÄ1
+G	java:S106•"+Replace this use of System.out by a logger.(Û´Š18Æå­ÌÄ1
+X
+java:S1161«":Add the "@Override" annotation above this method signature(“–ış8æå­ÌÄ1
+|
+java:S2142Ê"^Either re-interrupt this method or rethrow the "InterruptedException" that can be caught here.(ä ¹€8 ğ¾Æ1
+H	java:S106²"+Replace this use of System.out by a logger.(ŞÈÜ½8¡ğ¾Æ1
+M	java:S106¸"+Replace this use of System.out by a logger.(ü½ãÂúÿÿÿÿ8¢ğ¾Æ1
+H	java:S106Â"+Replace this use of System.out by a logger.(Üê8¤ğ¾Æ1
+H	java:S106Ë"+Replace this use of System.out by a logger.(Şâñ×8¤ğ¾Æ1
+H	java:S106Í"+Replace this use of System.out by a logger.(¶û’£8¦ğ¾Æ1
